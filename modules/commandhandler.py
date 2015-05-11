@@ -16,7 +16,7 @@ class CommandHandler(object):
             self.command = message.split()[1]
             self.commands = list()
             for command in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/commands/*.py'):
-                self.commands.append(command)
+                self.commands.append(command[38:-3])
             if (self.command in self.commands):
                 self.handle(channel, message, user)
             else:

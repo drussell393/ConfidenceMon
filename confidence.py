@@ -22,7 +22,7 @@ class ConfidenceMonitor(irc.IRCClient):
     
     def __init__(self):
         self.factory = ConfidenceMonitorFactory()
-        self.settingsdb = redis.StrictRedis(host = 'localhost', port = 6379, db = 0)
+        self.reloadsettings()
 
     def logging(self, loglevel, message):
         prefix = '[' + loglevel.upper() + '] '
@@ -56,6 +56,9 @@ class ConfidenceMonitor(irc.IRCClient):
         self.logging('crit', 'Confidence Monitor was kicked from {channel} by {kicker} with reason: {reason}'.format(channel = channel, kicker = kicker, reason = message))
         self.join(channel)
         self.msg(channel, 'I know you didn\'t mean to kick me.')
+
+    def reloadsettings(self):
+        self.settingsdb = redis.StrictRedis(host = 'localhost', port = 6379, db = 0)
 
 class ConfidenceMonitorFactory(protocol.ClientFactory):
     protocol = ConfidenceMonitor
