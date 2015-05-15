@@ -22,7 +22,7 @@ class ConfidenceMonitor(irc.IRCClient):
     
     def __init__(self):
         self.factory = ConfidenceMonitorFactory()
-        self.reloadsettings()
+        self.reloadSettings()
 
     def logging(self, loglevel, message):
         prefix = '[' + loglevel.upper() + '] '
@@ -39,6 +39,12 @@ class ConfidenceMonitor(irc.IRCClient):
 
     def joined(self, channel):
         self.logging('info', 'Confidence Monitor has joined {channel}'.format(channel = channel))
+        if (hasattr(self, 'sched') == False):
+            self.sched = BackgroundScheduler()
+            self.sched.start()
+            self.sched.add_job(self.getZabEvents, trigger = 'interval', minutes = 2)
+            self.loggingchannel = channel
+            self.getZabEvents()
 
     def privmsg(self, user, channel, msg):
         if (channel == self.nickname):
@@ -57,8 +63,22 @@ class ConfidenceMonitor(irc.IRCClient):
         self.join(channel)
         self.msg(channel, 'I know you didn\'t mean to kick me.')
 
-    def reloadsettings(self):
+    def reloadSettings(self):
         self.settingsdb = redis.StrictRedis(host = 'localhost', port = 6379, db = 0)
+
+    def getZabEvents(self):
+        zabapi = zabbix.ZabbixAPI(url = self.settingsdb.get('zaburl'), user = self.settingsdb.get('zabid'), password = self.settingsdb.get('zabpass'))
+        events = zabapi.trigger.get(maintenance = False, withUnacknowledgedEvents = True, selectHosts = 'extend', output = 'extend')
+        prefixes = {'0': 'Undefined',
+                    '1': 'INFO',
+                    '2': 'WARNING',
+                    '3': 'CAUTION',
+                    '4': 'CRITICAL',
+                    '5': 'CRITICAL'}
+        for event in events:
+            for host in event['hosts']:
+                if (len(host['maintenances']) == 0):
+                    self.msg(self.loggingchannel, prefixes[str(event['priority'])] + ' - ' + str(host['name']) + ' - ' + str(event['description']))
 
 class ConfidenceMonitorFactory(protocol.ClientFactory):
     protocol = ConfidenceMonitor
