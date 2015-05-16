@@ -13,20 +13,23 @@ class CommandHandler(object):
         self.main = confidence
 
     def init(self, channel, message, user):
-        self.messageParts = message.split()
-        if (len(self.messageParts) >= 2):
-            self.command = message.split()[1]
-            self.commands = list()
-            for command in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/commands/*.py'):
-                self.commands.append(command[38:-3])
-            if (self.command in self.commands):
-                self.handle(channel, message, user)
+        if (user in self.main.settingsdb.smembers('accesslist')):
+            self.messageParts = message.split()
+            if (len(self.messageParts) >= 2):
+                self.command = message.split()[1]
+                self.commands = list()
+                for command in glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/commands/*.py'):
+                    self.commands.append(command[38:-3])
+                if (self.command in self.commands):
+                    self.handle(channel, message, user)
+                else:
+                    self.main.logging('info', '{username} provided unknown command: {command}'.format(
+                        username=user, command=self.command))
+                    self.main.msg(channel, 'That command does not exist.')
             else:
-                self.main.logging('info', '{username} provided unknown command: {command}'.format(
-                    username=user, command=self.command))
-                self.main.msg(channel, 'That command does not exist.')
+                self.main.msg(channel, 'Not enough arguments to be a command.')
         else:
-            self.main.msg(channel, 'Not enough arguments to be a command.')
+            self.main.msg(channel, 'Access Denied.')
 
     def handle(self, channel, message, user):
         try:
