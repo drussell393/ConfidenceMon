@@ -6,7 +6,9 @@ import glob
 import os
 import imp
 
+
 class CommandHandler(object):
+
     def __init__(self, confidence):
         self.main = confidence
 
@@ -20,14 +22,16 @@ class CommandHandler(object):
             if (self.command in self.commands):
                 self.handle(channel, message, user)
             else:
-                self.main.logging('info', '{username} provided unknown command: {command}'.format(username = user, command = self.command))
+                self.main.logging('info', '{username} provided unknown command: {command}'.format(
+                    username=user, command=self.command))
                 self.main.msg(channel, 'That command does not exist.')
         else:
             self.main.msg(channel, 'Not enough arguments to be a command.')
 
     def handle(self, channel, message, user):
         try:
-            mod = imp.load_source('Confidence_Monitoring_Module_' + self.command, os.path.dirname(os.path.abspath(__file__)) + '/commands/' + self.command + '.py')
+            mod = imp.load_source('Confidence_Monitoring_Module_' + self.command, os.path.dirname(
+                os.path.abspath(__file__)) + '/commands/' + self.command + '.py')
             mod = mod.CommandClass(self.main)
             mod = mod.init(channel, message, user)
         except Exception as e:
