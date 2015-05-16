@@ -15,9 +15,9 @@ class CommandClass(object):
         if (len(msg.split()) >= 3):
             mod = imp.load_source('Confidence_Monitor_Bot_Zabbix', os.path.dirname(os.path.abspath(__file__)) + '/../zabbix.py')
             self.zabapi = mod.ZabbixAPI(url = self.main.settingsdb.get('zaburl'), user = self.main.settingsdb.get('zabid'), password = self.main.settingsdb.get('zabpass'))
-            host = self.zabapi.host.get(search = msg.split()[2], limit = 1)
+            host = self.zabapi.host.get(search = {'name': msg.split()[2]}, limit = 1)
             if (len(host) >= 1):
-                event = self.zabapi.event.get(search = msg.split()[3], hostids = int(host[0]['hostid']), acknowledged = False)
+                event = self.zabapi.trigger.get(search = {'description': msg.split()[3]}, hostids = int(host[0]['hostid']), withUnacknowledgedEvents = True, selectLastEvent = True)
                 if (len(event) >= 1):
                     self.ack(host, event, user)
                 else:
@@ -28,8 +28,8 @@ class CommandClass(object):
             self.main.msg(channel, 'I\'m sorry Dave, I cannot let you do that.')
             self.main.msg(channel, 'Insufficient number of arguments for \'ack\'.')
 
-    def ack(self, host, events, user):
-        for event in events:
-            self.zabapi.event.acknowledge(eventids = event['eventid'], message = 'Acknowledged by {username} on IRC.'.format(username = user))
-            self.main.msg(self.main.loggingchannel, '{event} on {server} acknowledged by {username}.'.format(event = event['eventid'], server = host[0]['hostid'], username = user))
-            self.main.logging('info', '{event} on {server} acknowledged by {username}.'.format(event = event['eventid'], server = host[0]['hostid'], username = user))
+    def ack(self, host, event, user):
+        eventinfo = event[0]['lastEvent']
+        self.zabapi.event.acknowledge(eventids = int(eventinfo['eventid']), message = 'Acknowledged by {username} on IRC.'.format(username = user))
+        self.main.msg(self.main.loggingchannel, '{event} on {server} acknowledged by {username}.'.format(event = eventinfo['eventid'], server = host[0]['hostid'], username = user))
+        self.main.logging('info', '{event} on {server} acknowledged by {username}.'.format(event = eventinfo['eventid'], server = host[0]['hostid'], username = user))

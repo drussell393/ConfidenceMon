@@ -78,7 +78,7 @@ class ConfidenceMonitor(irc.IRCClient):
         for event in events:
             for host in event['hosts']:
                 if (len(host['maintenances']) == 0):
-                    self.msg(self.loggingchannel, prefixes[str(event['priority'])] + ' - ' + str(host['name']) + ' - ' + str(event['description']))
+                    self.msg(self.loggingchannel, prefixes[str(event['priority'])] + ': ' + str(host['name']) + ' -- ' + str(event['description']))
 
 class ConfidenceMonitorFactory(protocol.ClientFactory):
     protocol = ConfidenceMonitor
