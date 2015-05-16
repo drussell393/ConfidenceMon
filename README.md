@@ -1,5 +1,24 @@
-Confidence Monitoring Bot v1.0
-------------------------------
+Confidence Monitoring Bot v1.01
+-------------------------------
+
+### Changelog
+
+Version 1.01 provides the following changes:
+
+- Introduce a global access list for commands
+- Fix broken 'arise' command
+- Fix broken 'ack' command
+- Create a new method in the core for the scheduler
+- Add PEP8 styling
+
+All known issues have been fixed at this point. This is the final release until
+I decide to add something else to it.
+
+Older release notes can still be found below.
+
+<hr />
+
+### Confidence Monitoring Bot v1.0
 
 The idea of this bot is purely to provide me with real-time or near real-time
 updates of my Zabbix monitoring events/triggers via IRC. The bot will also have
@@ -19,7 +38,7 @@ APScheduler for the timer. While I could have made my own timer, I decided that 
 bot would benefit from such an advanced scheduler like APScheduler.
 
 
-## Known Issues
+#### Known Issues
 
 I am currently aware of a few issues:
 
@@ -52,7 +71,7 @@ is that there's no pause\_job() method. It's just start() and stop(). I was hopi
 starting it again and just re-adding the job would fix it, but thus far it looks like a
 no-go.
 
-## The End
+#### The End
 
 That's really it thus far. Version 1.01 coming soon, woo. I'll actually include setuptools
 stuff next time.. Whoops.

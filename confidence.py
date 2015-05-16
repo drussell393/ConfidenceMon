@@ -19,7 +19,7 @@ class ConfidenceMonitor(irc.IRCClient):
     fingerReply = 'Don\'t FINGER me!'
     userinfo = 'Dave Russell\'s Bot'
     versionName = 'Confidence Monitoring Bot'
-    versionNum = 1.0
+    versionNum = 1.01
 
     def __init__(self):
         self.factory = ConfidenceMonitorFactory()
