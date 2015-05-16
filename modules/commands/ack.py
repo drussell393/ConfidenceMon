@@ -19,7 +19,7 @@ class CommandClass(object):
             if (len(host) >= 1):
                 event = self.zabapi.trigger.get(search = {'description': msg.split()[3]}, hostids = int(host[0]['hostid']), withUnacknowledgedEvents = True, selectLastEvent = True)
                 if (len(event) >= 1):
-                    self.ack(host, event, user)
+                    self.ack(host[0], event[0], user)
                 else:
                     self.main.msg(channel, 'I cannot find an event for that server that matches {event}'.format(event = msg.split()[3]))
             else:
@@ -29,7 +29,8 @@ class CommandClass(object):
             self.main.msg(channel, 'Insufficient number of arguments for \'ack\'.')
 
     def ack(self, host, event, user):
-        eventinfo = event[0]['lastEvent']
+        eventinfo = event['lastEvent']
         self.zabapi.event.acknowledge(eventids = int(eventinfo['eventid']), message = 'Acknowledged by {username} on IRC.'.format(username = user))
-        self.main.msg(self.main.loggingchannel, '{event} on {server} acknowledged by {username}.'.format(event = eventinfo['eventid'], server = host[0]['hostid'], username = user))
-        self.main.logging('info', '{event} on {server} acknowledged by {username}.'.format(event = eventinfo['eventid'], server = host[0]['hostid'], username = user))
+        self.main.msg(self.main.loggingchannel, '{event} on {server} acknowledged by {username}.'.format(event = eventinfo['eventid'], server = host['hostid'], username = user))
+        self.main.settingsdb.delete(str(event['triggerid']) + '-' + str(host['hostid']))
+        self.main.logging('info', '{event} on {server} acknowledged by {username}.'.format(event = eventinfo['eventid'], server = host['hostid'], username = user))

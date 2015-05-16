@@ -39,12 +39,9 @@ class ConfidenceMonitor(irc.IRCClient):
 
     def joined(self, channel):
         self.logging('info', 'Confidence Monitor has joined {channel}'.format(channel = channel))
-        if (hasattr(self, 'sched') == False):
-            self.sched = BackgroundScheduler()
-            self.sched.start()
-            self.sched.add_job(self.getZabEvents, trigger = 'interval', minutes = 2)
+        if (hasattr(self, 'loggingchannel') == False):
             self.loggingchannel = channel
-            self.getZabEvents()
+            self.startScheduler()
 
     def privmsg(self, user, channel, msg):
         if (channel == self.nickname):
@@ -66,6 +63,11 @@ class ConfidenceMonitor(irc.IRCClient):
     def reloadSettings(self):
         self.settingsdb = redis.StrictRedis(host = 'localhost', port = 6379, db = 0)
 
+    def startScheduler(self):
+        self.sched = BackgroundScheduler()
+        self.sched.start()
+        self.sched.add_job(self.getZabEvents, trigger = 'interval', minutes = 2)
+
     def getZabEvents(self):
         zabapi = zabbix.ZabbixAPI(url = self.settingsdb.get('zaburl'), user = self.settingsdb.get('zabid'), password = self.settingsdb.get('zabpass'))
         events = zabapi.trigger.get(maintenance = False, withUnacknowledgedEvents = True, selectHosts = 'extend', output = 'extend')
@@ -78,7 +80,15 @@ class ConfidenceMonitor(irc.IRCClient):
         for event in events:
             for host in event['hosts']:
                 if (len(host['maintenances']) == 0):
-                    self.msg(self.loggingchannel, prefixes[str(event['priority'])] + ': ' + str(host['name']) + ' -- ' + str(event['description']))
+                    eventdb = str(event['triggerid']) + '-' + str(host['hostid'])
+                    if (self.settingsdb.exists(eventdb)):
+                        if (self.settingsdb.get(eventdb) != str(event['lastchange'])):
+                            self.msg(self.loggingchannel, prefixes[str(event['priority'])] + ': ' + str(host['name']) + ' -- ' + str(event['description'] + ' -- Hostname: ' + str(host['host'])))
+                            self.settingsdb.delete(eventdb)
+                            self.settingsdb.append(eventdb, str(event['lastchange']))
+                    else:
+                        self.msg(self.loggingchannel, prefixes[str(event['priority'])] + ': ' + str(host['name']) + ' -- ' + str(event['description'] + ' -- Hostname: ' + str(host['host'])))
+                        self.settingsdb.append(eventdb, str(event['lastchange']))
 
 class ConfidenceMonitorFactory(protocol.ClientFactory):
     protocol = ConfidenceMonitor
